@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>U.S. Citizenship Test - Interactive Study Guide</title>
     <!-- Chosen Palette: Patriotic Harmony -->
-    <!-- Application Structure Plan: A single-page application designed for task-oriented learning. It features a language switcher (EN/ES) and five main sections navigated by a sticky header: 1) 'Study Cards' for topic-based learning with interactive flashcards, 2) 'Audio Study' for continuous audio playback of all questions and answers, 3) 'Practice Test' to simulate the civics exam with randomized questions and scoring, 4) 'Progress Tracker' to visualize test performance over time, and 5) 'Resources' with official links. This structure separates learning modes (browsing vs. testing) for a focused user experience and adds gamification through progress tracking to motivate users. Gemini API integration adds 'Explain' and 'Mnemonic' features to deepen understanding. A text-to-speech feature reads questions aloud individually or continuously. -->
-    <!-- Visualization & Content Choices: Report Info: 100 civics questions. Goal: Memorization & comprehension. Presentation: Interactive flashcards (HTML/CSS/JS) with reveal-on-click answers and category filters. Justification: Flashcards are a proven method for memorization. Filters allow users to focus on weak areas. Gemini API buttons for 'Explain' and 'Remember' provide deeper context and memory aids. A 'Listen' button uses the Web Speech API for auditory learning. The 'Audio Study' section provides a hands-free learning mode. Report Info: User test performance. Goal: Show improvement. Viz: Line Chart (Chart.js/Canvas). Interaction: Chart updates after each completed test. Justification: A line chart clearly visualizes trends in scores over time, providing motivation. All content is bilingual and toggled via JS. -->
+    <!-- Application Structure Plan: A single-page application designed for task-oriented learning. It features a language switcher (EN/ES) and five main sections navigated by a sticky header: 1) 'Study Cards' for topic-based learning with interactive flashcards, 2) 'Audio Study' for continuous audio playback of all questions and answers, 3) 'Practice Test' to simulate the civics exam with randomized questions and scoring, 4) 'Progress Tracker' to visualize test performance over time, and 5) 'Resources' with official links. This structure separates learning modes (browsing vs. testing) for a focused user experience and adds gamification through progress tracking to motivate users. A text-to-speech feature reads questions aloud individually or continuously. A search feature fetches topic summaries from Wikipedia into an in-page modal to maintain immersion. -->
+    <!-- Visualization & Content Choices: Report Info: 100 civics questions. Goal: Memorization & comprehension. Presentation: Interactive flashcards (HTML/CSS/JS) with reveal-on-click answers and category filters. Justification: Flashcards are a proven method for memorization. A 'Listen' button uses the Web Speech API for auditory learning. A 'Search Topic' button calls the Wikipedia API to display a summary in a modal, providing context without API keys or breaking immersion. The 'Audio Study' section provides a hands-free learning mode. Report Info: User test performance. Goal: Show improvement. Viz: Line Chart (Chart.js/Canvas). Interaction: Chart updates after each completed test. Justification: A line chart clearly visualizes trends in scores over time, providing motivation. All content is bilingual and toggled via JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -123,12 +123,11 @@
                             <p id="card-question" class="text-xl md:text-2xl font-semibold"></p>
                             <div class="mt-4 flex gap-2">
                                 <button id="speak-btn" class="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-full text-sm hover:bg-blue-200 transition">🔊 <span data-key="speak_btn">Listen</span></button>
-                                <button id="explain-btn" class="bg-purple-100 text-purple-700 font-semibold py-2 px-4 rounded-full text-sm hover:bg-purple-200 transition">✨ <span data-key="explain_btn">Explain This Concept</span></button>
+                                <button id="search-topic-btn" class="bg-purple-100 text-purple-700 font-semibold py-2 px-4 rounded-full text-sm hover:bg-purple-200 transition">🔎 <span data-key="search_btn">Search Topic</span></button>
                             </div>
                         </div>
                         <div class="card-face card-back absolute w-full h-full bg-blue-50 rounded-lg shadow-xl p-6 flex flex-col justify-center items-center text-center">
                             <p id="card-answer" class="text-lg md:text-xl whitespace-pre-wrap"></p>
-                             <button id="mnemonic-btn" class="mt-4 bg-teal-100 text-teal-700 font-semibold py-2 px-4 rounded-full text-sm hover:bg-teal-200 transition">✨ <span data-key="mnemonic_btn">Help Me Remember</span></button>
                         </div>
                     </div>
                 </div>
@@ -143,6 +142,21 @@
             </div>
         </section>
         
+        <div id="info-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
+            <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 transform scale-95">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h3 id="modal-title" class="text-xl font-bold"></h3>
+                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="modal-body" class="max-h-[60vh] overflow-y-auto">
+                    <div id="modal-loader" class="flex justify-center items-center h-32">
+                        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
+                    </div>
+                    <div id="modal-text" class="text-gray-700"></div>
+                </div>
+            </div>
+        </div>
+
         <section id="audio" class="py-16 md:py-24 bg-white rounded-lg shadow-lg">
             <div class="text-center mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold" data-key="audio_header">Audio Study Session</h2>
@@ -158,21 +172,6 @@
                 </div>
             </div>
         </section>
-
-        <div id="ai-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
-            <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 transform scale-95">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 id="modal-title" class="text-xl font-bold"></h3>
-                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                </div>
-                <div id="modal-body" class="max-h-[60vh] overflow-y-auto">
-                    <div id="modal-loader" class="flex justify-center items-center h-32">
-                        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
-                    </div>
-                    <p id="modal-text" class="text-gray-700 whitespace-pre-wrap"></p>
-                </div>
-            </div>
-        </div>
 
         <section id="test" class="py-16 md:py-24">
             <div class="text-center mb-12">
@@ -228,200 +227,192 @@
 
     <script>
         const civicsQuestions = [
-            { id: 1, category: "Principles of American Democracy", question_en: "What is the supreme law of the land?", answer_en: "The Constitution", question_es: "¿Cuál es la ley suprema de la nación?", answer_es: "La Constitución" },
-            { id: 2, category: "Principles of American Democracy", question_en: "What does the Constitution do?", answer_en: "sets up the government, defines the government, protects basic rights of Americans", question_es: "¿Qué hace la Constitución?", answer_es: "establece el gobierno, define el gobierno, protege los derechos básicos de los estadounidenses" },
-            { id: 3, category: "Principles of American Democracy", question_en: "The idea of self-government is in the first three words of the Constitution. What are these words?", answer_en: "We the People", question_es: "La idea del autogobierno está en las tres primeras palabras de la Constitución. ¿Cuáles son estas palabras?", answer_es: "Nosotros el Pueblo" },
-            { id: 4, category: "Principles of American Democracy", question_en: "What is an amendment?", answer_en: "a change (to the Constitution), an addition (to the Constitution)", question_es: "¿Qué es una enmienda?", answer_es: "un cambio (a la Constitución), una adición (a la Constitución)" },
-            { id: 5, category: "Principles of American Democracy", question_en: "What do we call the first ten amendments to the Constitution?", answer_en: "the Bill of Rights", question_es: "¿Con qué nombre se conocen las primeras diez enmiendas a la Constitución?", answer_es: "la Carta de Derechos" },
-            { id: 6, category: "Principles of American Democracy", question_en: "What is one right or freedom from the First Amendment?", answer_en: "speech, religion, assembly, press, petition the government", question_es: "¿Cuál es un derecho o libertad que la Primera Enmienda garantiza?", answer_es: "expresión, religión, reunión, prensa, peticionar al gobierno" },
-            { id: 7, category: "Principles of American Democracy", question_en: "How many amendments does the Constitution have?", answer_en: "twenty-seven (27)", question_es: "¿Cuántas enmiendas tiene la Constitución?", answer_es: "veintisiete (27)" },
-            { id: 8, category: "Principles of American Democracy", question_en: "What did the Declaration of Independence do?", answer_en: "announced our independence (from Great Britain), declared our independence (from Great Britain), said that the United States is free (from Great Britain)", question_es: "¿Qué hizo la Declaración de Independencia?", answer_es: "anunció nuestra independencia (de Gran Bretaña), declaró nuestra independencia (de Gran Bretaña), dijo que los Estados Unidos se independizó (de Gran Bretaña)" },
-            { id: 9, category: "Principles of American Democracy", question_en: "What are two rights in the Declaration of Independence?", answer_en: "life, liberty, pursuit of happiness", question_es: "¿Cuáles son dos derechos en la Declaración de la Independencia?", answer_es: "la vida, la libertad, la búsqueda de la felicidad" },
-            { id: 10, category: "Principles of American Democracy", question_en: "What is freedom of religion?", answer_en: "You can practice any religion, or not practice a religion.", question_es: "¿En qué consiste la libertad de religión?", answer_es: "Se puede practicar cualquier religión o no practicar ninguna." },
-            { id: 11, category: "System of Government", question_en: "What is the economic system in the United States?", answer_en: "capitalist economy, market economy", question_es: "¿Cuál es el sistema económico de los Estados Unidos?", answer_es: "economía capitalista, economía de mercado" },
-            { id: 12, category: "System of Government", question_en: "What is the 'rule of law'?", answer_en: "Everyone must follow the law, Leaders must obey the law, Government must obey the law, No one is above the law.", question_es: "¿En qué consiste el 'estado de derecho' (la ley y el orden)?", answer_es: "Todos deben obedecer la ley, Los líderes deben obedecer la ley, El gobierno debe obedecer la ley, Nadie está por encima de la ley." },
-            { id: 13, category: "System of Government", question_en: "Name one branch or part of the government.", answer_en: "Congress, legislative, President, executive, the courts, judicial", question_es: "Nombre una rama o parte del gobierno.", answer_es: "Congreso, legislativo, Presidente, ejecutivo, los tribunales, judicial" },
-            { id: 14, category: "System of Government", question_en: "What stops one branch of government from becoming too powerful?", answer_en: "checks and balances, separation of powers", question_es: "¿Qué es lo que evita que una rama del gobierno se vuelva demasiado poderosa?", answer_es: "pesos y contrapesos, separación de poderes" },
-            { id: 15, category: "System of Government", question_en: "Who is in charge of the executive branch?", answer_en: "the President", question_es: "¿Quién está a cargo de la rama ejecutiva?", answer_es: "el Presidente" },
-            { id: 16, category: "System of Government", question_en: "Who makes federal laws?", answer_en: "Congress, Senate and House (of Representatives), (U.S. or national) legislature", question_es: "¿Quién crea las leyes federales?", answer_es: "el Congreso, el Senado y la Cámara (de Representantes), la legislatura (nacional o de los Estados Unidos)" },
-            { id: 17, category: "System of Government", question_en: "What are the two parts of the U.S. Congress?", answer_en: "the Senate and House (of Representatives)", question_es: "¿Cuáles son las dos partes que integran el Congreso de los Estados Unidos?", answer_es: "el Senado y la Cámara (de Representantes)" },
-            { id: 18, category: "System of Government", question_en: "How many U.S. Senators are there?", answer_en: "one hundred (100)", question_es: "¿Cuántos senadores de los Estados Unidos hay?", answer_es: "cien (100)" },
-            { id: 19, category: "System of Government", question_en: "We elect a U.S. Senator for how many years?", answer_en: "six (6)", question_es: "¿De cuántos años es el término de elección de un senador de los Estados Unidos?", answer_es: "seis (6)" },
-            { id: 20, category: "System of Government", question_en: "Who is one of your state’s U.S. Senators now?", answer_en: "Answers will vary. [For Florida: Marco Rubio or Rick Scott]", question_es: "¿Quién es uno de los senadores actuales del estado donde usted vive?", answer_es: "Las respuestas variarán. [Para la Florida: Marco Rubio o Rick Scott]" },
-            { id: 21, category: "System of Government", question_en: "The House of Representatives has how many voting members?", answer_en: "four hundred thirty-five (435)", question_es: "¿Cuántos miembros votantes tiene la Cámara de Representantes?", answer_es: "cuatrocientos treinta y cinco (435)" },
-            { id: 22, category: "System of Government", question_en: "We elect a U.S. Representative for how many years?", answer_en: "two (2)", question_es: "¿De cuántos años es el término de elección de un representante de los Estados Unidos?", answer_es: "dos (2)" },
-            { id: 23, category: "System of Government", question_en: "Name your U.S. Representative.", answer_en: "Answers will vary.", question_es: "Dé el nombre de su representante a nivel nacional.", answer_es: "Las respuestas variarán." },
-            { id: 24, category: "System of Government", question_en: "Who does a U.S. Senator represent?", answer_en: "all people of the state", question_es: "¿A quiénes representa un senador de los Estados Unidos?", answer_es: "a todas las personas del estado" },
-            { id: 25, category: "System of Government", question_en: "Why do some states have more Representatives than other states?", answer_en: "(because of) the state’s population", question_es: "¿Por qué algunos estados tienen más representantes que otros?", answer_es: "(debido a) la población del estado" },
-            { id: 26, category: "System of Government", question_en: "We elect a President for how many years?", answer_en: "four (4)", question_es: "¿De cuántos años es el término de elección de un presidente?", answer_es: "cuatro (4)" },
-            { id: 27, category: "System of Government", question_en: "In what month do we vote for President?", answer_en: "November", question_es: "¿En qué mes votamos por un nuevo presidente?", answer_es: "noviembre" },
-            { id: 28, category: "System of Government", question_en: "What is the name of the President of the United States now?", answer_en: "Joe Biden", question_es: "¿Cómo se llama el actual Presidente de los Estados Unidos?", answer_es: "Joe Biden" },
-            { id: 29, category: "System of Government", question_en: "What is the name of the Vice President of the United States now?", answer_en: "Kamala Harris", question_es: "¿Cómo se llama el actual Vicepresidente de los Estados Unidos?", answer_es: "Kamala Harris" },
-            { id: 30, category: "System of Government", question_en: "If the President can no longer serve, who becomes President?", answer_en: "the Vice President", question_es: "Si el presidente ya no puede cumplir sus funciones, ¿quién se convierte en presidente?", answer_es: "el Vicepresidente" },
-            { id: 31, category: "System of Government", question_en: "If both the President and the Vice President can no longer serve, who becomes President?", answer_en: "the Speaker of the House", question_es: "Si tanto el presidente como el vicepresidente ya no pueden cumplir sus funciones, ¿quién se convierte en presidente?", answer_es: "el Presidente de la Cámara de Representantes" },
-            { id: 32, category: "System of Government", question_en: "Who is the Commander in Chief of the military?", answer_en: "the President", question_es: "¿Quién es el Comandante en Jefe de las Fuerzas Armadas?", answer_es: "el Presidente" },
-            { id: 33, category: "System of Government", question_en: "Who signs bills to become laws?", answer_en: "the President", question_es: "¿Quién firma los proyectos de ley para convertirlos en ley?", answer_es: "el Presidente" },
-            { id: 34, category: "System of Government", question_en: "Who vetoes bills?", answer_en: "the President", question_es: "¿Quién veta los proyectos de ley?", answer_es: "el Presidente" },
-            { id: 35, category: "System of Government", question_en: "What does the President’s Cabinet do?", answer_en: "advises the President", question_es: "¿Qué hace el Gabinete del Presidente?", answer_es: "asesora al Presidente" },
-            { id: 36, category: "System of Government", question_en: "What are two Cabinet-level positions?", answer_en: "Secretary of Agriculture, Secretary of Commerce, Secretary of Defense, Secretary of Education, Secretary of Energy, Secretary of Health and Human Services, Secretary of Homeland Security, Secretary of Housing and Urban Development, Secretary of the Interior, Secretary of Labor, Secretary of State, Secretary of Transportation, Secretary of the Treasury, Secretary of Veterans Affairs, Attorney General, Vice President", question_es: "¿Cuáles son dos puestos a nivel de gabinete?", answer_es: "Secretario de Agricultura, Secretario de Comercio, Secretario de Defensa, Secretario de Educación, Secretario de Energía, Secretario de Salud y Servicios Humanos, Secretario de Seguridad Nacional, Secretario de Vivienda y Desarrollo Urbano, Secretario del Interior, Secretario del Trabajo, Secretario de Estado, Secretario de Transporte, Secretario del Tesoro, Secretario de Asuntos de los Veteranos, Procurador General, Vicepresidente" },
-            { id: 37, category: "System of Government", question_en: "What does the judicial branch do?", answer_en: "reviews laws, explains laws, resolves disputes (disagreements), decides if a law goes against the Constitution", question_es: "¿Qué hace la rama judicial?", answer_es: "revisa las leyes, explica las leyes, resuelve disputas (desacuerdos), decide si una ley va en contra de la Constitución" },
-            { id: 38, category: "System of Government", question_en: "What is the highest court in the United States?", answer_en: "the Supreme Court", question_es: "¿Cuál es el tribunal más alto de los Estados Unidos?", answer_es: "la Corte Suprema" },
-            { id: 39, category: "System of Government", question_en: "How many justices are on the Supreme Court?", answer_en: "nine (9)", question_es: "¿Cuántos jueces hay en la Corte Suprema?", answer_es: "nueve (9)" },
-            { id: 40, category: "System of Government", question_en: "Who is the Chief Justice of the United States now?", answer_en: "John Roberts", question_es: "¿Quién es el Presidente actual de la Corte Suprema de los Estados Unidos?", answer_es: "John Roberts" },
-            { id: 41, category: "System of Government", question_en: "Under our Constitution, some powers belong to the federal government. What is one power of the federal government?", answer_en: "to print money, to declare war, to create an army, to make treaties", question_es: "De acuerdo a nuestra Constitución, algunos poderes pertenecen al gobierno federal. ¿Cuál es un poder del gobierno federal?", answer_es: "imprimir dinero, declarar la guerra, crear un ejército, suscribir tratados" },
-            { id: 42, category: "System of Government", question_en: "Under our Constitution, some powers belong to the states. What is one power of the states?", answer_en: "provide schooling and education, provide protection (police), provide safety (fire departments), give a driver's license, approve zoning and land use", question_es: "De acuerdo a nuestra Constitución, algunos poderes pertenecen a los estados. ¿Cuál es un poder de los estados?", answer_es: "proveer escuelas y educación, proveer protección (policía), proveer seguridad (cuerpos de bomberos), conceder licencias de conducir, aprobar la zonificación y el uso de la tierra" },
-            { id: 43, category: "System of Government", question_en: "Who is the Governor of your state now?", answer_en: "Answers will vary. [For Florida: Ron DeSantis]", question_es: "¿Quién es el gobernador actual de su estado?", answer_es: "Las respuestas variarán. [Para la Florida: Ron DeSantis]" },
-            { id: 44, category: "System of Government", question_en: "What is the capital of your state?", answer_en: "Answers will vary. [For Florida: Tallahassee]", question_es: "¿Cuál es la capital de su estado?", answer_es: "Las respuestas variarán. [Para la Florida: Tallahassee]" },
-            { id: 45, category: "System of Government", question_en: "What are the two major political parties in the United States?", answer_en: "Democratic and Republican", question_es: "¿Cuáles son los dos partidos políticos principales de los Estados Unidos?", answer_es: "Demócrata y Republicano" },
-            { id: 46, category: "System of Government", question_en: "What is the political party of the President now?", answer_en: "Democratic Party", question_es: "¿Cuál es el partido político del Presidente actual?", answer_es: "Partido Demócrata" },
-            { id: 47, category: "System of Government", question_en: "What is the name of the Speaker of the House of Representatives now?", answer_en: "Mike Johnson", question_es: "¿Cómo se llama el Presidente actual de la Cámara de Representantes?", answer_es: "Mike Johnson" },
-            { id: 48, category: "Rights and Responsibilities", question_en: "There are four amendments to the Constitution about who can vote. Describe one of them.", answer_en: "Citizens eighteen (18) and older (can vote), You don’t have to pay (a poll tax) to vote, Any citizen can vote. (Women and men can vote.), A male citizen of any race (can vote).", question_es: "Existen cuatro enmiendas a la Constitución sobre quién puede votar. Describa una de ellas.", answer_es: "Ciudadanos de dieciocho (18) años en adelante (pueden votar), No se exige pagar un impuesto para votar (el 'poll tax'), Cualquier ciudadano puede votar (tanto mujeres como hombres pueden votar), Un ciudadano varón de cualquier raza (puede votar)." },
-            { id: 49, category: "Rights and Responsibilities", question_en: "What is one responsibility that is only for United States citizens?", answer_en: "serve on a jury, vote in a federal election", question_es: "¿Cuál es una responsabilidad que corresponde sólo a los ciudadanos de los Estados Unidos?", answer_es: "prestar servicio en un jurado, votar en una elección federal" },
-            { id: 50, category: "Rights and Responsibilities", question_en: "Name one right only for United States citizens.", answer_en: "vote in a federal election, run for federal office", question_es: "Nombre un derecho que pueden ejercer sólo los ciudadanos de los Estados Unidos.", answer_es: "votar en una elección federal, postularse a un cargo político federal" },
-            { id: 51, category: "Rights and Responsibilities", question_en: "What are two rights of everyone living in the United States?", answer_en: "freedom of expression, freedom of speech, freedom of assembly, freedom to petition the government, freedom of religion, the right to bear arms", question_es: "¿Cuáles son dos derechos que pueden ejercer todas las personas que viven en los Estados Unidos?", answer_es: "libertad de expresión, libertad de palabra, libertad de reunión, libertad para peticionar al gobierno, libertad de religión, derecho a portar armas" },
-            { id: 52, category: "Rights and Responsibilities", question_en: "What do we show loyalty to when we say the Pledge of Allegiance?", answer_en: "the United States, the flag", question_es: "¿A qué demostramos nuestra lealtad cuando decimos el Juramento de Lealtad (Pledge of Allegiance)?", answer_es: "a los Estados Unidos, a la bandera" },
-            { id: 53, category: "Rights and Responsibilities", question_en: "What is one promise you make when you become a United States citizen?", answer_en: "give up loyalty to other countries, defend the Constitution and laws of the United States, obey the laws of the United States, serve in the U.S. military (if needed), serve (do important work for) the nation (if needed), be loyal to the United States", question_es: "¿Cuál es una promesa que usted hace cuando se convierte en ciudadano de los Estados Unidos?", answer_es: "renunciar a la lealtad a otros países, defender la Constitución y las leyes de los Estados Unidos, obedecer las leyes de los Estados Unidos, prestar servicio en las Fuerzas Armadas de los Estados Unidos (de ser necesario), prestar servicio (realizar trabajo importante para) a la nación (de ser necesario), ser leal a los Estados Unidos" },
-            { id: 54, category: "Rights and Responsibilities", question_en: "How old do citizens have to be to vote for President?", answer_en: "eighteen (18) and older", question_es: "¿Qué edad deben tener los ciudadanos para votar por el Presidente?", answer_es: "dieciocho (18) años en adelante" },
-            { id: 55, category: "Rights and Responsibilities", question_en: "What are two ways that Americans can participate in their democracy?", answer_en: "vote, join a political party, help with a campaign, join a civic group, join a community group, give an elected official your opinion on an issue, call Senators and Representatives, publicly support or oppose an issue or policy, run for office, write to a newspaper", question_es: "¿Cuáles son dos maneras en las que los ciudadanos americanos pueden participar en su democracia?", answer_es: "votar, afiliarse a un partido político, ayudar en una campaña, unirse a un grupo cívico, unirse a un grupo comunitario, expresar su opinión a un oficial electo, llamar a los senadores y representantes, apoyar u oponerse públicamente a un asunto o política, postularse a un cargo político, enviar una carta o mensaje a un periódico" },
-            { id: 56, category: "Rights and Responsibilities", question_en: "When is the last day you can send in federal income tax forms?", answer_en: "April 15", question_es: "¿Cuál es la fecha límite para enviar la declaración federal de impuestos sobre el ingreso?", answer_es: "el 15 de abril" },
-            { id: 57, category: "Rights and Responsibilities", question_en: "When must all men register for the Selective Service?", answer_en: "at age eighteen (18), between eighteen (18) and twenty-six (26)", question_es: "¿Cuándo deben inscribirse todos los hombres en el Servicio Selectivo?", answer_es: "a la edad de dieciocho (18) años, entre los dieciocho (18) y veintiséis (26) años de edad" },
-            { id: 58, category: "American History: Colonial Period and Independence", question_en: "What is one reason colonists came to America?", answer_en: "freedom, political liberty, religious freedom, economic opportunity, practice their religion, escape persecution", question_es: "¿Cuál es una razón por la que los colonos vinieron a América?", answer_es: "libertad, libertad política, libertad religiosa, oportunidad económica, para practicar su religión, para huir de la persecución" },
-            { id: 59, category: "American History: Colonial Period and Independence", question_en: "Who lived in America before the Europeans arrived?", answer_en: "American Indians, Native Americans", question_es: "¿Quiénes vivían en lo que hoy conocemos como los Estados Unidos antes de la llegada de los europeos?", answer_es: "Indios Americanos, Nativos Americanos" },
-            { id: 60, category: "American History: Colonial Period and Independence", question_en: "What group of people was taken to America and sold as slaves?", answer_en: "Africans, people from Africa", question_es: "¿Qué grupo de personas fue traído a los Estados Unidos y vendidos como esclavos?", answer_es: "africanos, gente de África" },
-            { id: 61, category: "American History: Colonial Period and Independence", question_en: "Why did the colonists fight the British?", answer_en: "because of high taxes (taxation without representation), because the British army stayed in their houses (boarding, quartering), because they didn’t have self-government", question_es: "¿Por qué lucharon los colonos contra los británicos?", answer_es: "debido a los impuestos altos (impuestos sin representación), porque el ejército británico se quedó en sus casas (alojamiento, acuartelamiento), porque no tenían autodeterminación" },
-            { id: 62, category: "American History: Colonial Period and Independence", question_en: "Who wrote the Declaration of Independence?", answer_en: "(Thomas) Jefferson", question_es: "¿Quién escribió la Declaración de Independencia?", answer_es: "(Thomas) Jefferson" },
-            { id: 63, category: "American History: Colonial Period and Independence", question_en: "When was the Declaration of Independence adopted?", answer_en: "July 4, 1776", question_es: "¿Cuándo fue adoptada la Declaración de Independencia?", answer_es: "el 4 de julio de 1776" },
-            { id: 64, category: "American History: Colonial Period and Independence", question_en: "There were 13 original states. Name three.", answer_en: "New Hampshire, Massachusetts, Rhode Island, Connecticut, New York, New Jersey, Pennsylvania, Delaware, Maryland, Virginia, North Carolina, South Carolina, Georgia", question_es: "Había 13 estados originales. Nombre tres.", answer_es: "Nueva Hampshire, Massachusetts, Rhode Island, Connecticut, Nueva York, Nueva Jersey, Pensilvania, Delaware, Maryland, Virginia, Carolina del Norte, Carolina del Sur, Georgia" },
-            { id: 65, category: "American History: Colonial Period and Independence", question_en: "What happened at the Constitutional Convention?", answer_en: "The Constitution was written, The Founding Fathers wrote the Constitution.", question_es: "¿Qué ocurrió en la Convención Constitucional?", answer_es: "Se redactó la Constitución, Los Padres Fundadores redactaron la Constitución." },
-            { id: 66, category: "American History: Colonial Period and Independence", question_en: "When was the Constitution written?", answer_en: "1787", question_es: "¿Cuándo fue redactada la Constitución?", answer_es: "1787" },
-            { id: 67, category: "American History: Colonial Period and Independence", question_en: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.", answer_en: "(James) Madison, (Alexander) Hamilton, (John) Jay, Publius", question_es: "Los escritos conocidos como 'Los Documentos Federalistas' respaldaron la aprobación de la Constitución de los Estados Unidos. Nombre uno de los autores.", answer_es: "(James) Madison, (Alexander) Hamilton, (John) Jay, Publius" },
-            { id: 68, category: "American History: Colonial Period and Independence", question_en: "What is one thing Benjamin Franklin is famous for?", answer_en: "U.S. diplomat, oldest member of the Constitutional Convention, first Postmaster General of the United States, writer of 'Poor Richard’s Almanac', started the first free libraries", question_es: "Mencione una razón por la que es famoso Benjamin Franklin.", answer_es: "diplomático estadounidense, el miembro de mayor edad de la Convención Constitucional, primer Director General de Correos de los Estados Unidos, autor de 'Poor Richard's Almanac' (El almanaque del pobre Richard), fundó las primeras bibliotecas gratuitas" },
-            { id: 69, category: "American History: Colonial Period and Independence", question_en: "Who is the 'Father of Our Country'?", answer_en: "(George) Washington", question_es: "¿Quién se conoce como el 'Padre de Nuestra Nación'?", answer_es: "(George) Washington" },
-            { id: 70, category: "American History: Colonial Period and Independence", question_en: "Who was the first President?", answer_en: "(George) Washington", question_es: "¿Quién fue el primer Presidente?", answer_es: "(George) Washington" },
-            { id: 71, category: "American History: The 1800s", question_en: "What territory did the United States buy from France in 1803?", answer_en: "the Louisiana Territory, Louisiana", question_es: "¿Qué territorio compró los Estados Unidos a Francia en 1803?", answer_es: "el territorio de Louisiana, Louisiana" },
-            { id: 72, category: "American History: The 1800s", question_en: "Name one war fought by the United States in the 1800s.", answer_en: "War of 1812, Mexican-American War, Civil War, Spanish-American War", question_es: "Mencione una guerra en la que peleó los Estados Unidos durante los años 1800.", answer_es: "la Guerra de 1812, la Guerra entre México y los Estados Unidos, la Guerra Civil, la Guerra Hispano-Estadounidense" },
-            { id: 73, category: "American History: The 1800s", question_en: "Name the U.S. war between the North and the South.", answer_en: "the Civil War, the War between the States", question_es: "Dé el nombre de la guerra de los Estados Unidos entre el Norte y el Sur.", answer_es: "la Guerra Civil, la Guerra entre los Estados" },
-            { id: 74, category: "American History: The 1800s", question_en: "Name one problem that led to the Civil War.", answer_en: "slavery, economic reasons, states’ rights", question_es: "Mencione un problema que condujo a la Guerra Civil.", answer_es: "la esclavitud, razones económicas, derechos de los estados" },
-            { id: 75, category: "American History: The 1800s", question_en: "What was one important thing that Abraham Lincoln did?", answer_en: "freed the slaves (Emancipation Proclamation), saved (or preserved) the Union, led the United States during the Civil War", question_es: "Mencione una cosa importante que hizo Abraham Lincoln.", answer_es: "liberó a los esclavos (Proclamación de la Emancipación), salvó (o preservó) la Unión, presidió los Estados Unidos durante la Guerra Civil" },
-            { id: 76, category: "American History: The 1800s", question_en: "What did the Emancipation Proclamation do?", answer_en: "freed the slaves, freed slaves in the Confederacy, freed slaves in the Confederate states, freed slaves in most Southern states", question_es: "¿Qué hizo la Proclamación de la Emancipación?", answer_es: "liberó a los esclavos, liberó a los esclavos de la Confederación, liberó a los esclavos en los estados de la Confederación, liberó a los esclavos en la mayoría de los estados del Sur" },
-            { id: 77, category: "American History: The 1800s", question_en: "What did Susan B. Anthony do?", answer_en: "fought for women’s rights, fought for civil rights", question_es: "¿Qué hizo Susan B. Anthony?", answer_es: "luchó por los derechos de la mujer, luchó por los derechos civiles" },
-            { id: 78, category: "Recent American History and Other Important Historical Information", question_en: "Name one war fought by the United States in the 1900s.", answer_en: "World War I, World War II, Korean War, Vietnam War, (Persian) Gulf War", question_es: "Mencione una guerra en la que peleó los Estados Unidos durante los años 1900.", answer_es: "la Primera Guerra Mundial, la Segunda Guerra Mundial, la Guerra de Corea, la Guerra de Vietnam, la Guerra del Golfo (Pérsico)" },
-            { id: 79, category: "Recent American History and Other Important Historical Information", question_en: "Who was President during World War I?", answer_en: "(Woodrow) Wilson", question_es: "¿Quién era el presidente durante la Primera Guerra Mundial?", answer_es: "(Woodrow) Wilson" },
-            { id: 80, category: "Recent American History and Other Important Historical Information", question_en: "Who was President during the Great Depression and World War II?", answer_en: "(Franklin) Roosevelt", question_es: "¿Quién era presidente durante la Gran Depresión y la Segunda Guerra Mundial?", answer_es: "(Franklin) Roosevelt" },
-            { id: 81, category: "Recent American History and Other Important Historical Information", question_en: "Who did the United States fight in World War II?", answer_en: "Japan, Germany, and Italy", question_es: "¿Contra qué países peleó los Estados Unidos en la Segunda Guerra Mundial?", answer_es: "Japón, Alemania e Italia" },
-            { id: 82, category: "Recent American History and Other Important Historical Information", question_en: "Before he was President, Eisenhower was a general. What war was he in?", answer_en: "World War II", question_es: "Antes de ser presidente, Eisenhower era general. ¿En qué guerra participó?", answer_es: "la Segunda Guerra Mundial" },
-            { id: 83, category: "Recent American History and Other Important Historical Information", question_en: "During the Cold War, what was the main concern of the United States?", answer_en: "Communism", question_es: "Durante la Guerra Fría, ¿cuál era la principal preocupación de los Estados Unidos?", answer_es: "el comunismo" },
-            { id: 84, category: "Recent American History and Other Important Historical Information", question_en: "What movement tried to end racial discrimination?", answer_en: "civil rights (movement)", question_es: "¿Qué movimiento trató de poner fin a la discriminación racial?", answer_es: "el movimiento de derechos civiles" },
-            { id: 85, category: "Recent American History and Other Important Historical Information", question_en: "What did Martin Luther King, Jr. do?", answer_en: "fought for civil rights, worked for equality for all Americans", question_es: "¿Qué hizo Martin Luther King, Jr.?", answer_es: "luchó por los derechos civiles, trabajó por la igualdad de todos los ciudadanos americanos" },
-            { id: 86, category: "Recent American History and Other Important Historical Information", question_en: "What major event happened on September 11, 2001, in the United States?", answer_en: "Terrorists attacked the United States.", question_es: "¿Qué suceso de gran magnitud ocurrió el 11 de septiembre de 2001 en los Estados Unidos?", answer_es: "Terroristas atacaron los Estados Unidos." },
-            { id: 87, category: "Recent American History and Other Important Historical Information", question_en: "Name one American Indian tribe in the United States.", answer_en: "Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Arawak, Shawnee, Mohegan, Huron, Oneida, Lakota, Crow, Teton, Hopi, Inuit", question_es: "Mencione una tribu de indios americanos en los Estados Unidos.", answer_es: "Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Arawak, Shawnee, Mohegan, Huron, Oneida, Lakota, Crow, Teton, Hopi, Inuit" },
-            { id: 88, category: "Integrated Civics: Geography", question_en: "Name one of the two longest rivers in the United States.", answer_en: "Missouri (River), Mississippi (River)", question_es: "Mencione uno de los dos ríos más largos en los Estados Unidos.", answer_es: "el (río) Missouri, el (río) Mississippi" },
-            { id: 89, category: "Integrated Civics: Geography", question_en: "What ocean is on the West Coast of the United States?", answer_en: "Pacific (Ocean)", question_es: "¿Qué océano está en la costa oeste de los Estados Unidos?", answer_es: "el océano Pacífico" },
-            { id: 90, category: "Integrated Civics: Geography", question_en: "What ocean is on the East Coast of the United States?", answer_en: "Atlantic (Ocean)", question_es: "¿Qué océano está en la costa este de los Estados Unidos?", answer_es: "el océano Atlántico" },
-            { id: 91, category: "Integrated Civics: Geography", question_en: "Name one U.S. territory.", answer_en: "Puerto Rico, U.S. Virgin Islands, American Samoa, Northern Mariana Islands, Guam", question_es: "Dé el nombre de un territorio de los Estados Unidos.", answer_es: "Puerto Rico, Islas Vírgenes de los Estados Unidos, Samoa Americana, Islas Marianas del Norte, Guam" },
-            { id: 92, category: "Integrated Civics: Geography", question_en: "Name one state that borders Canada.", answer_en: "Maine, New Hampshire, Vermont, New York, Pennsylvania, Ohio, Michigan, Minnesota, North Dakota, Montana, Idaho, Washington, Alaska", question_es: "Mencione un estado que tiene frontera con Canadá.", answer_es: "Maine, Nueva Hampshire, Vermont, Nueva York, Pensilvania, Ohio, Michigan, Minnesota, Dakota del Norte, Montana, Idaho, Washington, Alaska" },
-            { id: 93, category: "Integrated Civics: Geography", question_en: "Name one state that borders Mexico.", answer_en: "California, Arizona, New Mexico, Texas", question_es: "Mencione un estado que tiene frontera con México.", answer_es: "California, Arizona, Nuevo México, Texas" },
-            { id: 94, category: "Integrated Civics: Geography", question_en: "What is the capital of the United States?", answer_en: "Washington, D.C.", question_es: "¿Cuál es la capital de los Estados Unidos?", answer_es: "Washington, D.C." },
-            { id: 95, category: "Integrated Civics: Geography", question_en: "Where is the Statue of Liberty?", answer_en: "New York (Harbor), Liberty Island", question_es: "¿Dónde está la Estatua de la Libertad?", answer_es: "en el puerto de Nueva York, en Liberty Island" },
-            { id: 96, category: "Integrated Civics: Symbols", question_en: "Why does the flag have 13 stripes?", answer_en: "because there were 13 original colonies, because the stripes represent the original colonies", question_es: "¿Por qué hay 13 franjas en la bandera?", answer_es: "porque representan las 13 colonias originales, porque las franjas representan las colonias originales" },
-            { id: 97, category: "Integrated Civics: Symbols", question_en: "Why does the flag have 50 stars?", answer_en: "because there is one star for each state, because each star represents a state, because there are 50 states", question_es: "¿Por qué hay 50 estrellas en la bandera?", answer_es: "porque hay una estrella por cada estado, porque cada estrella representa un estado, porque hay 50 estados" },
-            { id: 98, category: "Integrated Civics: Symbols", question_en: "What is the name of the national anthem?", answer_en: "The Star-Spangled Banner", question_es: "¿Cómo se llama el himno nacional?", answer_es: "The Star-Spangled Banner" },
-            { id: 99, category: "Integrated Civics: Holidays", question_en: "When do we celebrate Independence Day?", answer_en: "July 4", question_es: "¿Cuándo celebramos el Día de la Independencia?", answer_es: "el 4 de julio" },
-            { id: 100, category: "Integrated Civics: Holidays", question_en: "Name two national U.S. holidays.", answer_en: "New Year’s Day, Martin Luther King, Jr. Day, Presidents’ Day, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas", question_es: "Mencione dos días feriados nacionales de los Estados Unidos.", answer_es: "el Día de Año Nuevo, el Día de Martin Luther King, Jr., el Día de los Presidentes, el Día de la Recordación (Memorial Day), el Día de la Independencia, el Día del Trabajo, el Día de la Raza (Columbus Day), el Día de los Veteranos, el Día de Acción de Gracias, el Día de Navidad" }
+            { id: 1, category: `Principles of American Democracy`, question_en: `What is the supreme law of the land?`, answer_en: `The Constitution`, question_es: `¿Cuál es la ley suprema de la nación?`, answer_es: `La Constitución` },
+            { id: 2, category: `Principles of American Democracy`, question_en: `What does the Constitution do?`, answer_en: `sets up the government, defines the government, protects basic rights of Americans`, question_es: `¿Qué hace la Constitución?`, answer_es: `establece el gobierno, define el gobierno, protege los derechos básicos de los estadounidenses` },
+            { id: 3, category: `Principles of American Democracy`, question_en: `The idea of self-government is in the first three words of the Constitution. What are these words?`, answer_en: `We the People`, question_es: `La idea del autogobierno está en las tres primeras palabras de la Constitución. ¿Cuáles son estas palabras?`, answer_es: `Nosotros el Pueblo` },
+            { id: 4, category: `Principles of American Democracy`, question_en: `What is an amendment?`, answer_en: `a change (to the Constitution), an addition (to the Constitution)`, question_es: `¿Qué es una enmienda?`, answer_es: `un cambio (a la Constitución), una adición (a la Constitución)` },
+            { id: 5, category: `Principles of American Democracy`, question_en: `What do we call the first ten amendments to the Constitution?`, answer_en: `the Bill of Rights`, question_es: `¿Con qué nombre se conocen las primeras diez enmiendas a la Constitución?`, answer_es: `la Carta de Derechos` },
+            { id: 6, category: `Principles of American Democracy`, question_en: `What is one right or freedom from the First Amendment?`, answer_en: `speech, religion, assembly, press, petition the government`, question_es: `¿Cuál es un derecho o libertad que la Primera Enmienda garantiza?`, answer_es: `expresión, religión, reunión, prensa, peticionar al gobierno` },
+            { id: 7, category: `Principles of American Democracy`, question_en: `How many amendments does the Constitution have?`, answer_en: `twenty-seven (27)`, question_es: `¿Cuántas enmiendas tiene la Constitución?`, answer_es: `veintisiete (27)` },
+            { id: 8, category: `Principles of American Democracy`, question_en: `What did the Declaration of Independence do?`, answer_en: `announced our independence (from Great Britain), declared our independence (from Great Britain), said that the United States is free (from Great Britain)`, question_es: `¿Qué hizo la Declaración de Independencia?`, answer_es: `anunció nuestra independencia (de Gran Bretaña), declaró nuestra independencia (de Gran Bretaña), dijo que los Estados Unidos se independizó (de Gran Bretaña)` },
+            { id: 9, category: `Principles of American Democracy`, question_en: `What are two rights in the Declaration of Independence?`, answer_en: `life, liberty, pursuit of happiness`, question_es: `¿Cuáles son dos derechos en la Declaración de la Independencia?`, answer_es: `la vida, la libertad, la búsqueda de la felicidad` },
+            { id: 10, category: `Principles of American Democracy`, question_en: `What is freedom of religion?`, answer_en: `You can practice any religion, or not practice a religion.`, question_es: `¿En qué consiste la libertad de religión?`, answer_es: `Se puede practicar cualquier religión o no practicar ninguna.` },
+            { id: 11, category: `System of Government`, question_en: `What is the economic system in the United States?`, answer_en: `capitalist economy, market economy`, question_es: `¿Cuál es el sistema económico de los Estados Unidos?`, answer_es: `economía capitalista, economía de mercado` },
+            { id: 12, category: `System of Government`, question_en: `What is the 'rule of law'?`, answer_en: `Everyone must follow the law, Leaders must obey the law, Government must obey the law, No one is above the law.`, question_es: `¿En qué consiste el 'estado de derecho' (la ley y el orden)?`, answer_es: `Todos deben obedecer la ley, Los líderes deben obedecer la ley, El gobierno debe obedecer la ley, Nadie está por encima de la ley.` },
+            { id: 13, category: `System of Government`, question_en: `Name one branch or part of the government.`, answer_en: `Congress, legislative, President, executive, the courts, judicial`, question_es: `Nombre una rama o parte del gobierno.`, answer_es: `Congreso, legislativo, Presidente, ejecutivo, los tribunais, judicial` },
+            { id: 14, category: `System of Government`, question_en: `What stops one branch of government from becoming too powerful?`, answer_en: `checks and balances, separation of powers`, question_es: `¿Qué es lo que evita que una rama del gobierno se vuelva demasiado poderosa?`, answer_es: `pesos y contrapesos, separación de poderes` },
+            { id: 15, category: `System of Government`, question_en: `Who is in charge of the executive branch?`, answer_en: `the President`, question_es: `¿Quién está a cargo de la rama ejecutiva?`, answer_es: `el Presidente` },
+            { id: 16, category: `System of Government`, question_en: `Who makes federal laws?`, answer_en: `Congress, Senate and House (of Representatives), (U.S. or national) legislature`, question_es: `¿Quién crea las leyes federales?`, answer_es: `el Congreso, el Senado y la Cámara (de Representantes), la legislatura (nacional o de los Estados Unidos)` },
+            { id: 17, category: `System of Government`, question_en: `What are the two parts of the U.S. Congress?`, answer_en: `the Senate and House (of Representatives)`, question_es: `¿Cuáles son las dos partes que integran el Congreso de los Estados Unidos?`, answer_es: `el Senado y la Cámara (de Representantes)` },
+            { id: 18, category: `System of Government`, question_en: `How many U.S. Senators are there?`, answer_en: `one hundred (100)`, question_es: `¿Cuántos senadores de los Estados Unidos hay?`, answer_es: `cien (100)` },
+            { id: 19, category: `System of Government`, question_en: `We elect a U.S. Senator for how many years?`, answer_en: `six (6)`, question_es: `¿De cuántos años es el término de elección de un senador de los Estados Unidos?`, answer_es: `seis (6)` },
+            { id: 20, category: `System of Government`, question_en: `Who is one of your state’s U.S. Senators now?`, answer_en: `Answers will vary. [For Florida: Marco Rubio or Rick Scott]`, question_es: `¿Quién es uno de los senadores actuales del estado donde usted vive?`, answer_es: `Las respuestas variarán. [Para la Florida: Marco Rubio o Rick Scott]` },
+            { id: 21, category: `System of Government`, question_en: `The House of Representatives has how many voting members?`, answer_en: `four hundred thirty-five (435)`, question_es: `¿Cuántos miembros votantes tiene la Cámara de Representantes?`, answer_es: `cuatrocientos treinta y cinco (435)` },
+            { id: 22, category: `System of Government`, question_en: `We elect a U.S. Representative for how many years?`, answer_en: `two (2)`, question_es: `¿De cuántos años es el término de elección de un representante de los Estados Unidos?`, answer_es: `dos (2)` },
+            { id: 23, category: `System of Government`, question_en: `Name your U.S. Representative.`, answer_en: `Answers will vary.`, question_es: `Dé el nombre de su representante a nivel nacional.`, answer_es: `Las respuestas variarán.` },
+            { id: 24, category: `System of Government`, question_en: `Who does a U.S. Senator represent?`, answer_en: `all people of the state`, question_es: `¿A quiénes representa un senador de los Estados Unidos?`, answer_es: `a todas las personas del estado` },
+            { id: 25, category: `System of Government`, question_en: `Why do some states have more Representatives than other states?`, answer_en: `(because of) the state’s population`, question_es: `¿Por qué algunos estados tienen más representantes que otros?`, answer_es: `(debido a) la población del estado` },
+            { id: 26, category: `System of Government`, question_en: `We elect a President for how many years?`, answer_en: `four (4)`, question_es: `¿De cuántos años es el término de elección de un presidente?`, answer_es: `cuatro (4)` },
+            { id: 27, category: `System of Government`, question_en: `In what month do we vote for President?`, answer_en: `November`, question_es: `¿En qué mes votamos por un nuevo presidente?`, answer_es: `noviembre` },
+            { id: 28, category: `System of Government`, question_en: `What is the name of the President of the United States now?`, answer_en: `Joe Biden`, question_es: `¿Cómo se llama el actual Presidente de los Estados Unidos?`, answer_es: `Joe Biden` },
+            { id: 29, category: `System of Government`, question_en: `What is the name of the Vice President of the United States now?`, answer_en: `Kamala Harris`, question_es: `¿Cómo se llama el actual Vicepresidente de los Estados Unidos?`, answer_es: `Kamala Harris` },
+            { id: 30, category: `System of Government`, question_en: `If the President can no longer serve, who becomes President?`, answer_en: `the Vice President`, question_es: `Si el presidente ya no puede cumplir sus funciones, ¿quién se convierte en presidente?`, answer_es: `el Vicepresidente` },
+            { id: 31, category: `System of Government`, question_en: `If both the President and the Vice President can no longer serve, who becomes President?`, answer_en: `the Speaker of the House`, question_es: `Si tanto el presidente como el vicepresidente ya no pueden cumplir sus funciones, ¿quién se convierte en presidente?`, answer_es: `el Presidente de la Cámara de Representantes` },
+            { id: 32, category: `System of Government`, question_en: `Who is the Commander in Chief of the military?`, answer_en: `the President`, question_es: `¿Quién es el Comandante en Jefe de las Fuerzas Armadas?`, answer_es: `el Presidente` },
+            { id: 33, category: `System of Government`, question_en: `Who signs bills to become laws?`, answer_en: `the President`, question_es: `¿Quién firma los proyectos de ley para convertirlos en ley?`, answer_es: `el Presidente` },
+            { id: 34, category: `System of Government`, question_en: `Who vetoes bills?`, answer_en: `the President`, question_es: `¿Quién veta los proyectos de ley?`, answer_es: `el Presidente` },
+            { id: 35, category: `System of Government`, question_en: `What does the President’s Cabinet do?`, answer_en: `advises the President`, question_es: `¿Qué hace el Gabinete del Presidente?`, answer_es: `asesora al Presidente` },
+            { id: 36, category: `System of Government`, question_en: `What are two Cabinet-level positions?`, answer_en: `Secretary of Agriculture, Secretary of Commerce, Secretary of Defense, Secretary of Education, Secretary of Energy, Secretary of Health and Human Services, Secretary of Homeland Security, Secretary of Housing and Urban Development, Secretary of the Interior, Secretary of Labor, Secretary of State, Secretary of Transportation, Secretary of the Treasury, Secretary of Veterans Affairs, Attorney General, Vice President`, question_es: `¿Cuáles son dos puestos a nivel de gabinete?`, answer_es: `Secretario de Agricultura, Secretario de Comercio, Secretario de Defensa, Secretario de Educación, Secretario de Energía, Secretario de Salud y Servicios Humanos, Secretario de Seguridad Nacional, Secretario de Vivienda y Desarrollo Urbano, Secretario del Interior, Secretario del Trabajo, Secretario de Estado, Secretario de Transporte, Secretario del Tesoro, Secretario de Asuntos de los Veteranos, Procurador General, Vicepresidente` },
+            { id: 37, category: `System of Government`, question_en: `What does the judicial branch do?`, answer_en: `reviews laws, explains laws, resolves disputes (disagreements), decides if a law goes against the Constitution`, question_es: `¿Qué hace la rama judicial?`, answer_es: `revisa las leyes, explica las leyes, resuelve disputas (desacuerdos), decide si una ley va en contra de la Constitución` },
+            { id: 38, category: `System of Government`, question_en: `What is the highest court in the United States?`, answer_en: `the Supreme Court`, question_es: `¿Cuál es el tribunal más alto de los Estados Unidos?`, answer_es: `la Corte Suprema` },
+            { id: 39, category: `System of Government`, question_en: `How many justices are on the Supreme Court?`, answer_en: `nine (9)`, question_es: `¿Cuántos jueces hay en la Corte Suprema?`, answer_es: `nueve (9)` },
+            { id: 40, category: `System of Government`, question_en: `Who is the Chief Justice of the United States now?`, answer_en: `John Roberts`, question_es: `¿Quién es el Presidente actual de la Corte Suprema de los Estados Unidos?`, answer_es: `John Roberts` },
+            { id: 41, category: `System of Government`, question_en: `Under our Constitution, some powers belong to the federal government. What is one power of the federal government?`, answer_en: `to print money, to declare war, to create an army, to make treaties`, question_es: `De acuerdo a nuestra Constitución, algunos poderes pertenecen al gobierno federal. ¿Cuál es un poder del gobierno federal?`, answer_es: `imprimir dinero, declarar la guerra, crear un ejército, suscribir tratados` },
+            { id: 42, category: `System of Government`, question_en: `Under our Constitution, some powers belong to the states. What is one power of the states?`, answer_en: `provide schooling and education, provide protection (police), provide safety (fire departments), give a driver's license, approve zoning and land use`, question_es: `De acuerdo a nuestra Constitución, algunos poderes pertenecen a los estados. ¿Cuál es un poder de los estados?`, answer_es: `proveer escuelas y educación, proveer protección (policía), proveer seguridad (cuerpos de bomberos), conceder licencias de conducir, aprobar la zonificación y el uso de la tierra` },
+            { id: 43, category: `System of Government`, question_en: `Who is the Governor of your state now?`, answer_en: `Answers will vary. [For Florida: Ron DeSantis]`, question_es: `¿Quién es el gobernador actual de su estado?`, answer_es: `Las respuestas variarán. [Para la Florida: Ron DeSantis]` },
+            { id: 44, category: `System of Government`, question_en: `What is the capital of your state?`, answer_en: `Answers will vary. [For Florida: Tallahassee]`, question_es: `¿Cuál es la capital de su estado?`, answer_es: `Las respuestas variarán. [Para la Florida: Tallahassee]` },
+            { id: 45, category: `System of Government`, question_en: `What are the two major political parties in the United States?`, answer_en: `Democratic and Republican`, question_es: `¿Cuáles son los dos partidos políticos principales de los Estados Unidos?`, answer_es: `Demócrata y Republicano` },
+            { id: 46, category: `System of Government`, question_en: `What is the political party of the President now?`, answer_en: `Democratic Party`, question_es: `¿Cuál es el partido político del Presidente actual?`, answer_es: `Partido Demócrata` },
+            { id: 47, category: `System of Government`, question_en: `What is the name of the Speaker of the House of Representatives now?`, answer_en: `Mike Johnson`, question_es: `¿Cómo se llama el Presidente actual de la Cámara de Representantes?`, answer_es: `Mike Johnson` },
+            { id: 48, category: `Rights and Responsibilities`, question_en: `There are four amendments to the Constitution about who can vote. Describe one of them.`, answer_en: `Citizens eighteen (18) and older (can vote), You don’t have to pay (a poll tax) to vote, Any citizen can vote. (Women and men can vote.), A male citizen of any race (can vote).`, question_es: `Existen cuatro enmiendas a la Constitución sobre quién puede votar. Describa una de ellas.`, answer_es: `Ciudadanos de dieciocho (18) años en adelante (pueden votar), No se exige pagar un impuesto para votar (el 'poll tax'), Cualquier ciudadano puede votar (tanto mujeres como hombres pueden votar), Un ciudadano varón de cualquier raza (puede votar).` },
+            { id: 49, category: `Rights and Responsibilities`, question_en: `What is one responsibility that is only for United States citizens?`, answer_en: `serve on a jury, vote in a federal election`, question_es: `¿Cuál es una responsabilidad que corresponde sólo a los ciudadanos de los Estados Unidos?`, answer_es: `prestar servicio en un jurado, votar en una elección federal` },
+            { id: 50, category: `Rights and Responsibilities`, question_en: `Name one right only for United States citizens.`, answer_en: `vote in a federal election, run for federal office`, question_es: `Nombre un derecho que pueden ejercer sólo los ciudadanos de los Estados Unidos.`, answer_es: `votar en una elección federal, postularse a un cargo político federal` },
+            { id: 51, category: `Rights and Responsibilities`, question_en: `What are two rights of everyone living in the United States?`, answer_en: `freedom of expression, freedom of speech, freedom of assembly, freedom to petition the government, freedom of religion, the right to bear arms`, question_es: `¿Cuáles son dos derechos que pueden ejercer todas las personas que viven en los Estados Unidos?`, answer_es: `libertad de expresión, libertad de palabra, libertad de reunión, libertad para peticionar al gobierno, libertad de religión, derecho a portar armas` },
+            { id: 52, category: `Rights and Responsibilities`, question_en: `What do we show loyalty to when we say the Pledge of Allegiance?`, answer_en: `the United States, the flag`, question_es: `¿A qué demostramos nuestra lealtad cuando decimos el Juramento de Lealtad (Pledge of Allegiance)?`, answer_es: `a los Estados Unidos, a la bandera` },
+            { id: 53, category: `Rights and Responsibilities`, question_en: `What is one promise you make when you become a United States citizen?`, answer_en: `give up loyalty to other countries, defend the Constitution and laws of the United States, obey the laws of the United States, serve in the U.S. military (if needed), serve (do important work for) the nation (if needed), be loyal to the United States`, question_es: `¿Cuál es una promesa que usted hace cuando se convierte en ciudadano de los Estados Unidos?`, answer_es: `renunciar a la lealtad a otros países, defender la Constitución y las leyes de los Estados Unidos, obedecer las leyes de los Estados Unidos, prestar servicio en las Fuerzas Armadas de los Estados Unidos (de ser necesario), prestar servicio (realizar trabajo importante para) a la nación (de ser necesario), ser leal a los Estados Unidos` },
+            { id: 54, category: `Rights and Responsibilities`, question_en: `How old do citizens have to be to vote for President?`, answer_en: `eighteen (18) and older`, question_es: `¿Qué edad deben tener los ciudadanos para votar por el Presidente?`, answer_es: `dieciocho (18) años en adelante` },
+            { id: 55, category: `Rights and Responsibilities`, question_en: `What are two ways that Americans can participate in their democracy?`, answer_en: `vote, join a political party, help with a campaign, join a civic group, join a community group, give an elected official your opinion on an issue, call Senators and Representatives, publicly support or oppose an issue or policy, run for office, write to a newspaper`, question_es: `¿Cuáles son dos maneras en las que los ciudadanos americanos pueden participar en su democracia?`, answer_es: `votar, afiliarse a un partido político, ayudar en una campaña, unirse a un grupo cívico, unirse a un grupo comunitario, expresar su opinión a un oficial electo, llamar a los senadores y representantes, apoyar u oponerse públicamente a un asunto o política, postularse a un cargo político, enviar una carta o mensaje a un periódico` },
+            { id: 56, category: `Rights and Responsibilities`, question_en: `When is the last day you can send in federal income tax forms?`, answer_en: `April 15`, question_es: `¿Cuál es la fecha límite para enviar la declaración federal de impuestos sobre el ingreso?`, answer_es: `el 15 de abril` },
+            { id: 57, category: `Rights and Responsibilities`, question_en: `When must all men register for the Selective Service?`, answer_en: `at age eighteen (18), between eighteen (18) and twenty-six (26)`, question_es: `¿Cuándo deben inscribirse todos los hombres en el Servicio Selectivo?`, answer_es: `a la edad de dieciocho (18) años, entre los dieciocho (18) y veintiséis (26) años de edad` },
+            { id: 58, category: `American History: Colonial Period and Independence`, question_en: `What is one reason colonists came to America?`, answer_en: `freedom, political liberty, religious freedom, economic opportunity, practice their religion, escape persecution`, question_es: `¿Cuál es una razón por la que los colonos vinieron a América?`, answer_es: `libertad, libertad política, libertad religiosa, oportunidad económica, para practicar su religión, para huir de la persecución` },
+            { id: 59, category: `American History: Colonial Period and Independence`, question_en: `Who lived in America before the Europeans arrived?`, answer_en: `American Indians, Native Americans`, question_es: `¿Quiénes vivían en lo que hoy conocemos como los Estados Unidos antes de la llegada de los europeos?`, answer_es: `Indios Americanos, Nativos Americanos` },
+            { id: 60, category: `American History: Colonial Period and Independence`, question_en: `What group of people was taken to America and sold as slaves?`, answer_en: `Africans, people from Africa`, question_es: `¿Qué grupo de personas fue traído a los Estados Unidos y vendidos como esclavos?`, answer_es: `africanos, gente de África` },
+            { id: 61, category: `American History: Colonial Period and Independence`, question_en: `Why did the colonists fight the British?`, answer_en: `because of high taxes (taxation without representation), because the British army stayed in their houses (boarding, quartering), because they didn’t have self-government`, question_es: `¿Por qué lucharon los colonos contra los británicos?`, answer_es: `debido a los impuestos altos (impuestos sin representación), porque el ejército británico se quedó en sus casas (alojamiento, acuartelamiento), porque no tenían autodeterminación` },
+            { id: 62, category: `American History: Colonial Period and Independence`, question_en: `Who wrote the Declaration of Independence?`, answer_en: `(Thomas) Jefferson`, question_es: `¿Quién escribió la Declaración de Independencia?`, answer_es: `(Thomas) Jefferson` },
+            { id: 63, category: `American History: Colonial Period and Independence`, question_en: `When was the Declaration of Independence adopted?`, answer_en: `July 4, 1776`, question_es: `¿Cuándo fue adoptada la Declaración de Independencia?`, answer_es: `el 4 de julio de 1776` },
+            { id: 64, category: `American History: Colonial Period and Independence`, question_en: `There were 13 original states. Name three.`, answer_en: `New Hampshire, Massachusetts, Rhode Island, Connecticut, New York, New Jersey, Pennsylvania, Delaware, Maryland, Virginia, North Carolina, South Carolina, Georgia`, question_es: `Había 13 estados originales. Nombre tres.`, answer_es: `Nueva Hampshire, Massachusetts, Rhode Island, Connecticut, Nueva York, Nueva Jersey, Pensilvania, Delaware, Maryland, Virginia, Carolina del Norte, Carolina del Sur, Georgia` },
+            { id: 65, category: `American History: Colonial Period and Independence`, question_en: `What happened at the Constitutional Convention?`, answer_en: `The Constitution was written, The Founding Fathers wrote the Constitution.`, question_es: `¿Qué ocurrió en la Convención Constitucional?`, answer_es: `Se redactó la Constitución, Los Padres Fundadores redactaron la Constitución.` },
+            { id: 66, category: `American History: Colonial Period and Independence`, question_en: `When was the Constitution written?`, answer_en: `1787`, question_es: `¿Cuándo fue redactada la Constitución?`, answer_es: `1787` },
+            { id: 67, category: `American History: Colonial Period and Independence`, question_en: `The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.`, answer_en: `(James) Madison, (Alexander) Hamilton, (John) Jay, Publius`, question_es: `Los escritos conocidos como 'Los Documentos Federalistas' respaldaron la aprobación de la Constitución de los Estados Unidos. Nombre uno de los autores.`, answer_es: `(James) Madison, (Alexander) Hamilton, (John) Jay, Publius` },
+            { id: 68, category: `American History: Colonial Period and Independence`, question_en: `What is one thing Benjamin Franklin is famous for?`, answer_en: `U.S. diplomat, oldest member of the Constitutional Convention, first Postmaster General of the United States, writer of 'Poor Richard’s Almanac', started the first free libraries`, question_es: `Mencione una razón por la que es famoso Benjamin Franklin.`, answer_es: `diplomático estadounidense, el miembro de mayor edad de la Convención Constitucional, primer Director General de Correos de los Estados Unidos, autor de 'Poor Richard's Almanac' (El almanaque del pobre Richard), fundó las primeras bibliotecas gratuitas` },
+            { id: 69, category: `American History: Colonial Period and Independence`, question_en: `Who is the 'Father of Our Country'?`, answer_en: `(George) Washington`, question_es: `¿Quién se conoce como el 'Padre de Nuestra Nación'?`, answer_es: `(George) Washington` },
+            { id: 70, category: `American History: Colonial Period and Independence`, question_en: `Who was the first President?`, answer_en: `(George) Washington`, question_es: `¿Quién fue el primer Presidente?`, answer_es: `(George) Washington` },
+            { id: 71, category: `American History: The 1800s`, question_en: `What territory did the United States buy from France in 1803?`, answer_en: `the Louisiana Territory, Louisiana`, question_es: `¿Qué territorio compró los Estados Unidos a Francia en 1803?`, answer_es: `el territorio de Louisiana, Louisiana` },
+            { id: 72, category: `American History: The 1800s`, question_en: `Name one war fought by the United States in the 1800s.`, answer_en: `War of 1812, Mexican-American War, Civil War, Spanish-American War`, question_es: `Mencione una guerra en la que peleó los Estados Unidos durante los años 1800.`, answer_es: `la Guerra de 1812, la Guerra entre México y los Estados Unidos, la Guerra Civil, la Guerra Hispano-Estadounidense` },
+            { id: 73, category: `American History: The 1800s`, question_en: `Name the U.S. war between the North and the South.`, answer_en: `the Civil War, the War between the States`, question_es: `Dé el nombre de la guerra de los Estados Unidos entre el Norte y el Sur.`, answer_es: `la Guerra Civil, la Guerra entre los Estados` },
+            { id: 74, category: `American History: The 1800s`, question_en: `Name one problem that led to the Civil War.`, answer_en: `slavery, economic reasons, states’ rights`, question_es: `Mencione un problema que condujo a la Guerra Civil.`, answer_es: `la esclavitud, razones económicas, derechos de los estados` },
+            { id: 75, category: `American History: The 1800s`, question_en: `What was one important thing that Abraham Lincoln did?`, answer_en: `freed the slaves (Emancipation Proclamation), saved (or preserved) the Union, led the United States during the Civil War`, question_es: `Mencione una cosa importante que hizo Abraham Lincoln.`, answer_es: `liberó a los esclavos (Proclamación de la Emancipación), salvó (o preservó) la Unión, presidió los Estados Unidos durante la Guerra Civil` },
+            { id: 76, category: `American History: The 1800s`, question_en: `What did the Emancipation Proclamation do?`, answer_en: `freed the slaves, freed slaves in the Confederacy, freed slaves in the Confederate states, freed slaves in most Southern states`, question_es: `¿Qué hizo la Proclamación de la Emancipación?`, answer_es: `liberó a los esclavos, liberó a los esclavos de la Confederación, liberó a los esclavos en los estados de la Confederación, liberó a los esclavos en la mayoría de los estados del Sur` },
+            { id: 77, category: `American History: The 1800s`, question_en: `What did Susan B. Anthony do?`, answer_en: `fought for women’s rights, fought for civil rights`, question_es: `¿Qué hizo Susan B. Anthony?`, answer_es: `luchó por los derechos de la mujer, luchó por los derechos civiles` },
+            { id: 78, category: `Recent American History and Other Important Historical Information`, question_en: `Name one war fought by the United States in the 1900s.`, answer_en: `World War I, World War II, Korean War, Vietnam War, (Persian) Gulf War`, question_es: `Mencione una guerra en la que peleó los Estados Unidos durante los años 1900.`, answer_es: `la Primera Guerra Mundial, la Segunda Guerra Mundial, la Guerra de Corea, la Guerra de Vietnam, la Guerra del Golfo (Pérsico)` },
+            { id: 79, category: `Recent American History and Other Important Historical Information`, question_en: `Who was President during World War I?`, answer_en: `(Woodrow) Wilson`, question_es: `¿Quién era el presidente durante la Primera Guerra Mundial?`, answer_es: `(Woodrow) Wilson` },
+            { id: 80, category: `Recent American History and Other Important Historical Information`, question_en: `Who was President during the Great Depression and World War II?`, answer_en: `(Franklin) Roosevelt`, question_es: `¿Quién era presidente durante la Gran Depresión y la Segunda Guerra Mundial?`, answer_es: `(Franklin) Roosevelt` },
+            { id: 81, category: `Recent American History and Other Important Historical Information`, question_en: `Who did the United States fight in World War II?`, answer_en: `Japan, Germany, and Italy`, question_es: `¿Contra qué países peleó los Estados Unidos en la Segunda Guerra Mundial?`, answer_es: `Japón, Alemania e Italia` },
+            { id: 82, category: `Recent American History and Other Important Historical Information`, question_en: `Before he was President, Eisenhower was a general. What war was he in?`, answer_en: `World War II`, question_es: `Antes de ser presidente, Eisenhower era general. ¿En qué guerra participó?`, answer_es: `la Segunda Guerra Mundial` },
+            { id: 83, category: `Recent American History and Other Important Historical Information`, question_en: `During the Cold War, what was the main concern of the United States?`, answer_en: `Communism`, question_es: `Durante la Guerra Fría, ¿cuál era la principal preocupación de los Estados Unidos?`, answer_es: `el comunismo` },
+            { id: 84, category: `Recent American History and Other Important Historical Information`, question_en: `What movement tried to end racial discrimination?`, answer_en: `civil rights (movement)`, question_es: `¿Qué movimiento trató de poner fin a la discriminación racial?`, answer_es: `el movimiento de derechos civiles` },
+            { id: 85, category: `Recent American History and Other Important Historical Information`, question_en: `What did Martin Luther King, Jr. do?`, answer_en: `fought for civil rights, worked for equality for all Americans`, question_es: `¿Qué hizo Martin Luther King, Jr.?`, answer_es: `luchó por los derechos civiles, trabajó por la igualdad de todos los ciudadanos americanos` },
+            { id: 86, category: `Recent American History and Other Important Historical Information`, question_en: `What major event happened on September 11, 2001, in the United States?`, answer_en: `Terrorists attacked the United States.`, question_es: `¿Qué suceso de gran magnitud ocurrió el 11 de septiembre de 2001 en los Estados Unidos?`, answer_es: `Terroristas atacaron los Estados Unidos.` },
+            { id: 87, category: `Recent American History and Other Important Historical Information`, question_en: `Name one American Indian tribe in the United States.`, answer_en: `Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Arawak, Shawnee, Mohegan, Huron, Oneida, Lakota, Crow, Teton, Hopi, Inuit`, question_es: `Mencione una tribu de indios americanos en los Estados Unidos.`, answer_es: `Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Arawak, Shawnee, Mohegan, Huron, Oneida, Lakota, Crow, Teton, Hopi, Inuit` },
+            { id: 88, category: `Integrated Civics: Geography`, question_en: `Name one of the two longest rivers in the United States.`, answer_en: `Missouri (River), Mississippi (River)`, question_es: `Mencione uno de los dos ríos más largos en los Estados Unidos.`, answer_es: `el (río) Missouri, el (río) Mississippi` },
+            { id: 89, category: `Integrated Civics: Geography`, question_en: `What ocean is on the West Coast of the United States?`, answer_en: `Pacific (Ocean)`, question_es: `¿Qué océano está en la costa oeste de los Estados Unidos?`, answer_es: `el océano Pacífico` },
+            { id: 90, category: `Integrated Civics: Geography`, question_en: `What ocean is on the East Coast of the United States?`, answer_en: `Atlantic (Ocean)`, question_es: `¿Qué océano está en la costa este de los Estados Unidos?`, answer_es: `el océano Atlántico` },
+            { id: 91, category: `Integrated Civics: Geography`, question_en: `Name one U.S. territory.`, answer_en: `Puerto Rico, U.S. Virgin Islands, American Samoa, Northern Mariana Islands, Guam`, question_es: `Dé el nombre de un territorio de los Estados Unidos.`, answer_es: `Puerto Rico, Islas Vírgenes de los Estados Unidos, Samoa Americana, Islas Marianas del Norte, Guam` },
+            { id: 92, category: `Integrated Civics: Geography`, question_en: `Name one state that borders Canada.`, answer_en: `Maine, New Hampshire, Vermont, New York, Pennsylvania, Ohio, Michigan, Minnesota, North Dakota, Montana, Idaho, Washington, Alaska`, question_es: `Mencione un estado que tiene frontera con Canadá.`, answer_es: `Maine, Nueva Hampshire, Vermont, Nueva York, Pensilvania, Ohio, Michigan, Minnesota, Dakota del Norte, Montana, Idaho, Washington, Alaska` },
+            { id: 93, category: `Integrated Civics: Geography`, question_en: `Name one state that borders Mexico.`, answer_en: `California, Arizona, New Mexico, Texas`, question_es: `Mencione un estado que tiene frontera con México.`, answer_es: `California, Arizona, Nuevo México, Texas` },
+            { id: 94, category: `Integrated Civics: Geography`, question_en: `What is the capital of the United States?`, answer_en: `Washington, D.C.`, question_es: `¿Cuál es la capital de los Estados Unidos?`, answer_es: `Washington, D.C.` },
+            { id: 95, category: `Integrated Civics: Geography`, question_en: `Where is the Statue of Liberty?`, answer_en: `New York (Harbor), Liberty Island`, question_es: `¿Dónde está la Estatua de la Libertad?`, answer_es: `en el puerto de Nueva York, en Liberty Island` },
+            { id: 96, category: `Integrated Civics: Symbols`, question_en: `Why does the flag have 13 stripes?`, answer_en: `because there were 13 original colonies, because the stripes represent the original colonies`, question_es: `¿Por qué hay 13 franjas en la bandera?`, answer_es: `porque representan las 13 colonias originales, porque las franjas representan las colonias originales` },
+            { id: 97, category: `Integrated Civics: Symbols`, question_en: `Why does the flag have 50 stars?`, answer_en: `because there is one star for each state, because each star represents a state, because there are 50 states`, question_es: `¿Por qué hay 50 estrellas en la bandera?`, answer_es: `porque hay una estrella por cada estado, porque cada estrella representa un estado, porque hay 50 estados` },
+            { id: 98, category: `Integrated Civics: Symbols`, question_en: `What is the name of the national anthem?`, answer_en: `The Star-Spangled Banner`, question_es: `¿Cómo se llama el himno nacional?`, answer_es: `The Star-Spangled Banner` },
+            { id: 99, category: `Integrated Civics: Holidays`, question_en: `When do we celebrate Independence Day?`, answer_en: `July 4`, question_es: `¿Cuándo celebramos el Día de la Independencia?`, answer_es: `el 4 de julio` },
+            { id: 100, category: `Integrated Civics: Holidays`, question_en: `Name two national U.S. holidays.`, answer_en: `New Year’s Day, Martin Luther King, Jr. Day, Presidents’ Day, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas`, question_es: `Mencione dos días feriados nacionales de los Estados Unidos.`, answer_es: `el Día de Año Nuevo, el Día de Martin Luther King, Jr., el Día de los Presidentes, el Día de la Recordación (Memorial Day), el Día de la Independencia, el Día del Trabajo, el Día de la Raza (Columbus Day), el Día de los Veteranos, el Día de Acción de Gracias, el Día de Navidad` }
         ];
 
         const translations = {
             en: {
-                title: "Study Guide",
-                nav_home: "Home",
-                nav_study: "Study Cards",
-                nav_audio: "Audio Study",
-                nav_test: "Practice Test",
-                nav_progress: "Progress",
-                welcome_header: "Welcome to Your Citizenship Study Tool",
-                welcome_subheader: "This interactive guide is designed to help you prepare for the civics portion of the U.S. Naturalization Test. Use the study cards to learn, then test your knowledge with the practice exam.",
-                start_studying_btn: "Start Studying",
-                study_header: "Study Cards",
-                study_subheader: "Browse questions by category. Click on a card to reveal the answer.",
-                reveal_answer_btn: "Reveal Answer",
-                prev_btn: "Prev",
-                next_btn: "Next",
-                speak_btn: "Listen",
-                explain_btn: "Explain This Concept",
-                mnemonic_btn: "Help Me Remember",
-                audio_header: "Audio Study Session",
-                audio_subheader: "Listen to all 100 questions and answers back-to-back.",
-                audio_idle: "Press play to begin.",
-                audio_playing: "Playing question",
-                audio_finished: "Audio playback finished.",
-                play_all_btn: "Play All",
-                stop_btn: "Stop",
-                modal_explanation_title: "Explanation",
-                modal_mnemonic_title: "Memory Aid",
-                modal_error: "Sorry, I couldn't get a response. Please try again.",
-                test_header: "Practice Test",
-                test_subheader: "Answer 10 randomly selected civics questions to test your knowledge.",
-                start_test_btn: "Start Test",
-                question_label: "Question",
-                next_question_btn: "Next Question",
-                results_header: "Test Results",
-                retake_test_btn: "Retake Test",
-                progress_header: "Your Progress",
-                progress_subheader: "Track your practice test scores over time. Keep practicing to improve!",
-                all_categories: "All Categories",
-                pass_message: "Congratulations, you passed!",
-                fail_message: "Keep studying. You need at least 6 correct answers to pass.",
-                score_label: "Score",
-                test_attempt_label: "Test Attempt",
-                footer_disclaimer_1: "This tool is for study purposes only. Always refer to the official",
-                uscis_link: "U.S. Citizenship and Immigration Services (USCIS) website",
-                footer_disclaimer_2: "for the most current information and questions.",
+                title: `Study Guide`,
+                nav_home: `Home`,
+                nav_study: `Study Cards`,
+                nav_audio: `Audio Study`,
+                nav_test: `Practice Test`,
+                nav_progress: `Progress`,
+                welcome_header: `Welcome to Your Citizenship Study Tool`,
+                welcome_subheader: `This interactive guide is designed to help you prepare for the civics portion of the U.S. Naturalization Test. Use the study cards to learn, then test your knowledge with the practice exam.`,
+                start_studying_btn: `Start Studying`,
+                study_header: `Study Cards`,
+                study_subheader: `Browse questions by category. Click on a card to reveal the answer.`,
+                reveal_answer_btn: `Reveal Answer`,
+                prev_btn: `Prev`,
+                next_btn: `Next`,
+                speak_btn: `Listen`,
+                search_btn: `Search Topic`,
+                audio_header: `Audio Study Session`,
+                audio_subheader: `Listen to all 100 questions and answers back-to-back.`,
+                audio_idle: `Press play to begin.`,
+                audio_playing: `Playing question`,
+                audio_finished: `Audio playback finished.`,
+                play_all_btn: `Play All`,
+                stop_btn: `Stop`,
+                test_header: `Practice Test`,
+                test_subheader: `Answer 10 randomly selected civics questions to test your knowledge.`,
+                start_test_btn: `Start Test`,
+                question_label: `Question`,
+                next_question_btn: `Next Question`,
+                results_header: `Test Results`,
+                retake_test_btn: `Retake Test`,
+                progress_header: `Your Progress`,
+                progress_subheader: `Track your practice test scores over time. Keep practicing to improve!`,
+                all_categories: `All Categories`,
+                pass_message: `Congratulations, you passed!`,
+                fail_message: `Keep studying. You need at least 6 correct answers to pass.`,
+                score_label: `Score`,
+                test_attempt_label: `Test Attempt`,
+                footer_disclaimer_1: `This tool is for study purposes only. Always refer to the official`,
+                uscis_link: `U.S. Citizenship and Immigration Services (USCIS) website`,
+                footer_disclaimer_2: `for the most current information and questions.`,
             },
             es: {
-                title: "Guía de Estudio",
-                nav_home: "Inicio",
-                nav_study: "Tarjetas de Estudio",
-                nav_audio: "Estudio con Audio",
-                nav_test: "Prueba de Práctica",
-                nav_progress: "Progreso",
-                welcome_header: "Bienvenido a su Herramienta de Estudio para la Ciudadanía",
-                welcome_subheader: "Esta guía interactiva está diseñada para ayudarlo a prepararse para la parte de civismo del Examen de Naturalización de EE. UU. Use las tarjetas de estudio para aprender, luego ponga a prueba sus conocimientos con el examen de práctica.",
-                start_studying_btn: "Empezar a Estudiar",
-                study_header: "Tarjetas de Estudio",
-                study_subheader: "Explore las preguntas por categoría. Haga clic en una tarjeta para revelar la respuesta.",
-                reveal_answer_btn: "Revelar Respuesta",
-                prev_btn: "Ant",
-                next_btn: "Sig",
-                speak_btn: "Escuchar",
-                explain_btn: "Explica este Concepto",
-                mnemonic_btn: "Ayúdame a Recordar",
-                audio_header: "Sesión de Estudio con Audio",
-                audio_subheader: "Escuche las 100 preguntas y respuestas de forma consecutiva.",
-                audio_idle: "Presione reproducir para comenzar.",
-                audio_playing: "Reproduciendo pregunta",
-                audio_finished: "Reproducción de audio finalizada.",
-                play_all_btn: "Reproducir Todo",
-                stop_btn: "Detener",
-                modal_explanation_title: "Explicación",
-                modal_mnemonic_title: "Ayuda de Memoria",
-                modal_error: "Lo siento, no pude obtener una respuesta. Por favor, inténtalo de nuevo.",
-                test_header: "Prueba de Práctica",
-                test_subheader: "Responda 10 preguntas de civismo seleccionadas al azar para evaluar sus conocimientos.",
-                start_test_btn: "Iniciar Prueba",
-                question_label: "Pregunta",
-                next_question_btn: "Siguiente Pregunta",
-                results_header: "Resultados de la Prueba",
-                retake_test_btn: "Repetir Prueba",
-                progress_header: "Su Progreso",
-                progress_subheader: "Siga sus puntajes de las pruebas de práctica a lo largo del tiempo. ¡Siga practicando para mejorar!",
-                all_categories: "Todas las Categorías",
-                pass_message: "¡Felicidades, ha aprobado!",
-                fail_message: "Siga estudiando. Necesita al menos 6 respuestas correctas para aprobar.",
-                score_label: "Puntuación",
-                test_attempt_label: "Intento de Prueba",
-                footer_disclaimer_1: "Esta herramienta es solo para fines de estudio. Consulte siempre el sitio web oficial de",
-                uscis_link: "Servicios de Ciudadanía e Inmigración de EE. UU. (USCIS)",
-                footer_disclaimer_2: "para obtener la información y las preguntas más actuales.",
+                title: `Guía de Estudio`,
+                nav_home: `Inicio`,
+                nav_study: `Tarjetas de Estudio`,
+                nav_audio: `Estudio con Audio`,
+                nav_test: `Prueba de Práctica`,
+                nav_progress: `Progreso`,
+                welcome_header: `Bienvenido a su Herramienta de Estudio para la Ciudadanía`,
+                welcome_subheader: `Esta guía interactiva está diseñada para ayudarlo a prepararse para la parte de civismo del Examen de Naturalización de EE. UU. Use las tarjetas de estudio para aprender, luego ponga a prueba sus conocimientos con el examen de práctica.`,
+                start_studying_btn: `Empezar a Estudiar`,
+                study_header: `Tarjetas de Estudio`,
+                study_subheader: `Explore las preguntas por categoría. Haga clic en una tarjeta para revelar la respuesta.`,
+                reveal_answer_btn: `Revelar Respuesta`,
+                prev_btn: `Ant`,
+                next_btn: `Sig`,
+                speak_btn: `Escuchar`,
+                search_btn: `Buscar Tema`,
+                audio_header: `Sesión de Estudio con Audio`,
+                audio_subheader: `Escuche las 100 preguntas y respuestas de forma consecutiva.`,
+                audio_idle: `Presione reproducir para comenzar.`,
+                audio_playing: `Reproduciendo pregunta`,
+                audio_finished: `Reproducción de audio finalizada.`,
+                play_all_btn: `Reproducir Todo`,
+                stop_btn: `Detener`,
+                test_header: `Prueba de Práctica`,
+                test_subheader: `Responda 10 preguntas de civismo seleccionadas al azar para evaluar sus conocimientos.`,
+                start_test_btn: `Iniciar Prueba`,
+                question_label: `Pregunta`,
+                next_question_btn: `Siguiente Pregunta`,
+                results_header: `Resultados de la Prueba`,
+                retake_test_btn: `Repetir Prueba`,
+                progress_header: `Su Progreso`,
+                progress_subheader: `Siga sus puntajes de las pruebas de práctica a lo largo del tiempo. ¡Siga practicando para mejorar!`,
+                all_categories: `Todas las Categorías`,
+                pass_message: `¡Felicidades, ha aprobado!`,
+                fail_message: `Siga estudiando. Necesita al menos 6 respuestas correctas para aprobar.`,
+                score_label: `Puntuación`,
+                test_attempt_label: `Intento de Prueba`,
+                footer_disclaimer_1: `Esta herramienta es solo para fines de estudio. Consulte siempre el sitio web oficial de`,
+                uscis_link: `Servicios de Ciudadanía e Inmigración de EE. UU. (USCIS)`,
+                footer_disclaimer_2: `para obtener la información y las preguntas más actuales.`,
             }
         };
 
@@ -457,9 +448,9 @@
         const mobileMenu = document.getElementById('mobile-menu');
 
         const speakBtn = document.getElementById('speak-btn');
-        const explainBtn = document.getElementById('explain-btn');
-        const mnemonicBtn = document.getElementById('mnemonic-btn');
-        const aiModal = document.getElementById('ai-modal');
+        const searchTopicBtn = document.getElementById('search-topic-btn');
+        
+        const infoModal = document.getElementById('info-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalText = document.getElementById('modal-text');
         const modalLoader = document.getElementById('modal-loader');
@@ -486,89 +477,14 @@
 
         let progressChart;
         
-        async function callGeminiAPI(prompt) {
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [{ text: prompt }]
-                }]
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API call failed with status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    return result.candidates[0].content.parts[0].text;
-                } else {
-                    console.error("Unexpected API response structure:", result);
-                    return translations[state.language].modal_error;
-                }
-            } catch (error) {
-                console.error("Error calling Gemini API:", error);
-                return translations[state.language].modal_error;
-            }
-        }
-
         function showModal() {
-            aiModal.classList.remove('opacity-0', 'pointer-events-none');
-            aiModal.querySelector('.modal-content').classList.remove('scale-95');
+            infoModal.classList.remove('opacity-0', 'pointer-events-none');
+            infoModal.querySelector('.modal-content').classList.remove('scale-95');
         }
 
         function hideModal() {
-            aiModal.classList.add('opacity-0', 'pointer-events-none');
-            aiModal.querySelector('.modal-content').classList.add('scale-95');
-        }
-        
-        async function handleExplainClick() {
-            const questionData = state.filteredQuestions[state.currentCardIndex];
-            const questionText = questionData[`question_${state.language}`];
-            const answerText = questionData[`answer_${state.language}`];
-            
-            modalTitle.textContent = translations[state.language].modal_explanation_title;
-            modalText.textContent = '';
-            modalLoader.style.display = 'flex';
-            showModal();
-
-            const prompt = state.language === 'es'
-                ? `Explica el concepto detrás de esta pregunta y respuesta de la prueba de ciudadanía de EE. UU. de una manera simple y fácil de entender. Pregunta: "${questionText}" Respuesta: "${answerText}"`
-                : `Explain the concept behind this U.S. citizenship test question and answer in a simple, easy-to-understand way. Question: "${questionText}" Answer: "${answerText}"`;
-
-            const explanation = await callGeminiAPI(prompt);
-            modalLoader.style.display = 'none';
-            modalText.textContent = explanation;
-        }
-
-        async function handleMnemonicClick() {
-            const questionData = state.filteredQuestions[state.currentCardIndex];
-            const questionText = questionData[`question_${state.language}`];
-            const answerText = questionData[`answer_${state.language}`];
-
-            modalTitle.textContent = translations[state.language].modal_mnemonic_title;
-            modalText.textContent = '';
-            modalLoader.style.display = 'flex';
-            showModal();
-
-            const prompt = state.language === 'es'
-                ? `Crea un mnemónico, acrónimo o una historia simple para ayudar a recordar la respuesta a esta pregunta de la prueba de ciudadanía de EE. UU. Pregunta: "${questionText}" Respuesta: "${answerText}"`
-                : `Create a mnemonic, acronym, or simple story to help remember the answer to this U.S. citizenship test question. Question: "${questionText}" Answer: "${answerText}"`;
-            
-            const mnemonic = await callGeminiAPI(prompt);
-            modalLoader.style.display = 'none';
-            modalText.textContent = mnemonic;
+            infoModal.classList.add('opacity-0', 'pointer-events-none');
+            infoModal.querySelector('.modal-content').classList.add('scale-95');
         }
 
         function speakText(text, lang, onEndCallback) {
@@ -589,6 +505,43 @@
             const questionData = state.filteredQuestions[state.currentCardIndex];
             const questionText = questionData.question_en;
             speakText(questionText, 'en-US');
+        }
+
+        async function searchTopic() {
+            const questionData = state.filteredQuestions[state.currentCardIndex];
+            if (!questionData) {
+                console.error("No question data found for the current index.");
+                return;
+            }
+            
+            const answerText = questionData.answer_en.split(',')[0].replace(/\(.*\)/g, '').trim();
+            modalTitle.textContent = `Searching for: ${answerText}`;
+            modalText.innerHTML = '';
+            modalLoader.style.display = 'flex';
+            showModal();
+
+            const query = encodeURIComponent(answerText);
+            const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${query}`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`Wikipedia API returned status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                modalTitle.textContent = data.title;
+                modalText.innerHTML = `<p>${data.extract}</p><a href="${data.content_urls.desktop.page}" target="_blank" class="text-blue-600 hover:underline mt-4 inline-block">Read more on Wikipedia</a>`;
+
+            } catch (error) {
+                console.error("Error fetching from Wikipedia:", error);
+                modalTitle.textContent = "Error";
+                modalText.innerHTML = `<p>Could not find information for "${answerText}". Please try another topic.</p>`;
+            } finally {
+                modalLoader.style.display = 'none';
+            }
         }
 
         function playAudioQueue() {
@@ -661,7 +614,9 @@
                 option.textContent = cat;
                 categoryFilter.appendChild(option);
             });
-            categoryFilter.value = currentCategory;
+            if (currentCategory) {
+               categoryFilter.value = currentCategory;
+            }
         }
 
         function filterQuestions() {
@@ -965,17 +920,14 @@
             e.stopPropagation();
             speakQuestion();
         });
-        explainBtn.addEventListener('click', (e) => {
+        searchTopicBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            handleExplainClick();
+            searchTopic();
         });
-        mnemonicBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleMnemonicClick();
-        });
+        
         closeModalBtn.addEventListener('click', hideModal);
-        aiModal.addEventListener('click', (e) => {
-            if (e.target === aiModal) {
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
                 hideModal();
             }
         });
@@ -985,6 +937,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             updateUIWithLanguage();
+            // Default to "All Categories"
+            categoryFilter.value = 'all';
             filterQuestions();
             loadProgressData();
             renderProgressChart();
