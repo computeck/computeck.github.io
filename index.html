@@ -514,13 +514,20 @@
                 return;
             }
             
-            const answerText = questionData.answer_en.split(',')[0].replace(/\(.*\)/g, '').trim();
-            modalTitle.textContent = `Searching for: ${answerText}`;
+            let answerText = questionData.answer_en.split(',')[0].replace(/\(.*\)/g, '').trim();
+            let searchTerm = answerText;
+
+            // Special case for "speech" to make the search more specific
+            if (answerText.toLowerCase() === 'speech') {
+                searchTerm = 'Freedom of speech';
+            }
+
+            modalTitle.textContent = `Searching for: ${searchTerm}`;
             modalText.innerHTML = '';
             modalLoader.style.display = 'flex';
             showModal();
 
-            const query = encodeURIComponent(answerText);
+            const query = encodeURIComponent(searchTerm);
             const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${query}`;
 
             try {
@@ -538,7 +545,7 @@
             } catch (error) {
                 console.error("Error fetching from Wikipedia:", error);
                 modalTitle.textContent = "Error";
-                modalText.innerHTML = `<p>Could not find information for "${answerText}". Please try another topic.</p>`;
+                modalText.innerHTML = `<p>Could not find information for "${searchTerm}". Please try another topic.</p>`;
             } finally {
                 modalLoader.style.display = 'none';
             }
